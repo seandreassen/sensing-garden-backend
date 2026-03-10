@@ -29,8 +29,8 @@ except ImportError:
 s3 = boto3.client('s3')
 
 # Resource names
-IMAGES_BUCKET = "scl-sensing-garden-images"
-VIDEOS_BUCKET = "scl-sensing-garden-videos"
+IMAGES_BUCKET = "scl-sensing-garden-images-827202648234"
+VIDEOS_BUCKET = "scl-sensing-garden-videos-827202648234"
 
 # API Key Validation Functions
 def validate_api_key(event: Dict[str, Any]) -> Tuple[bool, str]:

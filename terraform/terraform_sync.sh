@@ -8,8 +8,8 @@ cd "$(dirname "$0")"
 
 # --- S3 Buckets ---
 echo "Importing S3 buckets..."
-terraform import aws_s3_bucket.sensor_images scl-sensing-garden-images || true
-terraform import aws_s3_bucket.sensor_videos scl-sensing-garden-videos || true
+terraform import aws_s3_bucket.sensor_images scl-sensing-garden-images-827202648234 || true
+terraform import aws_s3_bucket.sensor_videos scl-sensing-garden-videos-827202648234 || true
 
 # --- DynamoDB Tables ---
 echo "Importing DynamoDB tables..."

@@ -126,7 +126,7 @@
               "description": "Latitude coordinate"
             },
             "long": {
-              "type": "number", 
+              "type": "number",
               "description": "Longitude coordinate"
             },
             "alt": {
@@ -140,7 +140,7 @@
           "description": "PM1.0 particulate matter concentration (μg/m³)"
         },
         "pm2p5": {
-          "type": "number", 
+          "type": "number",
           "description": "PM2.5 particulate matter concentration (μg/m³)"
         },
         "pm4p0": {
@@ -156,7 +156,7 @@
           "description": "Ambient temperature (°C)"
         },
         "humidity": {
-          "type": "number", 
+          "type": "number",
           "description": "Ambient relative humidity (%)"
         },
         "voc_index": {
@@ -312,6 +312,82 @@
           "description": "Additional metadata about the environmental reading"
         }
       }
+    },
+    "deployments": {
+      "type": "object",
+      "required": [
+        "deployment_id",
+        "deployment_name",
+        "timestamp_start",
+        "model_id",
+        "location_name",
+        "image_bucket",
+        "description"
+      ],
+      "properties": {
+        "deployment_id": {
+          "type": "string",
+          "description": "Unique identifier for the deployment"
+        },
+        "timestamp_start": {
+          "type": "string",
+          "description": "ISO-8601 formatted timestamp for the start of the deployment"
+        },
+        "timestamp_end": {
+          "type": "string",
+          "description": "ISO-8601 formatted timestamp for the end of the deployment"
+        },
+        "model_id": {
+          "type": "string",
+          "description": "Unique identifier for the model used in the deployment"
+        },
+        "location_name": {
+          "type": "string",
+          "description": "Name of location of deployment"
+        },
+        "location_coordinates": {
+          "type": "string",
+          "description": "ISO-6709 formatted coordinates for the deployment"
+        },
+        "image_bucket": {
+          "type": "string",
+          "description": "S3 bucket for stored image"
+        },
+        "image_key": {
+          "type": "string",
+          "description": "S3 key for stored image"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the deployment"
+        }
+      }
+    },
+    "deployment_device_connections": {
+      "type": "object",
+      "required": [
+        "deployment_id",
+        "device_id",
+        "image_bucket"
+      ],
+      "properties": {
+        "deployment_id": {
+          "type": "string",
+          "description": "Unique identifier for the deployment"
+        },
+        "device_id": {
+          "type": "string",
+          "description": "Unique identifier for the device"
+        },
+        "location_name": {
+          "type": "string",
+          "description": "Version identifier for the model"
+        },
+        "location_coordinates": {
+          "type": "string",
+          "description": "ISO-6709 formatted coordinates for the deployment"
+        }
+      }
     }
   },
   "required": [
@@ -319,6 +395,8 @@
     "sensor_classifications",
     "models",
     "videos",
-    "environmental_readings"
+    "environmental_readings",
+    "deployments",
+    "deployment_device_connections"
   ]
 }
