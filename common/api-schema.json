@@ -20,13 +20,22 @@
             "description": "Filter models by device_id"
           },
           {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter deployments by name"
+          },
+          {
             "name": "model_id",
             "in": "query",
             "required": false,
             "schema": {
               "type": "string"
             },
-            "description": "Filter by specific model_id"
+            "description": "Filter by deployments by model_id"
           },
           {
             "name": "start_time",
@@ -126,10 +135,18 @@
       "get": {
         "summary": "Get a count of models",
         "parameters": [
-          {"$ref": "#/paths/~1models/get/parameters/0"},
-          {"$ref": "#/paths/~1models/get/parameters/1"},
-          {"$ref": "#/paths/~1models/get/parameters/2"},
-          {"$ref": "#/paths/~1models/get/parameters/3"}
+          {
+            "$ref": "#/paths/~1models/get/parameters/0"
+          },
+          {
+            "$ref": "#/paths/~1models/get/parameters/1"
+          },
+          {
+            "$ref": "#/paths/~1models/get/parameters/2"
+          },
+          {
+            "$ref": "#/paths/~1models/get/parameters/3"
+          }
         ],
         "responses": {
           "200": {
@@ -139,11 +156,169 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": {"type": "integer"}
+                    "count": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/deployments": {
+      "get": {
+        "summary": "Get a list of deployments",
+        "parameters": [
+          {
+            "name": "deployment_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter deployments by deployment_id"
+          },
+          {
+            "name": "model_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter deployments by model_id"
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Start time for filtering deployments (ISO-8601)"
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "End time for filtering deployments (ISO-8601)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100
+            },
+            "description": "Maximum number of deployments to return"
+          },
+          {
+            "name": "next_token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token for pagination"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Attribute to sort by (e.g., 'timestamp', 'device_id')"
+          },
+          {
+            "name": "sort_desc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "If true, sort in descending order"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of deployments"
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Submit a deployment request",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deployment processed successfully"
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/deployments/{deployment_id}": {
+      "patch": {
+        "summary": "Update an existing deployment",
+        "parameters": [
+          {
+            "name": "deployment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the deployment to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeploymentData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deployment updated successfully"
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "404": {
+            "description": "Deployment not found"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
@@ -268,12 +443,24 @@
       "get": {
         "summary": "Get a count of detections",
         "parameters": [
-          {"$ref": "#/paths/~1detections/get/parameters/0"},
-          {"$ref": "#/paths/~1detections/get/parameters/1"},
-          {"$ref": "#/paths/~1detections/get/parameters/2"},
-          {"$ref": "#/paths/~1detections/get/parameters/3"},
-          {"$ref": "#/paths/~1detections/get/parameters/4"},
-          {"$ref": "#/paths/~1detections/get/parameters/5"}
+          {
+            "$ref": "#/paths/~1detections/get/parameters/0"
+          },
+          {
+            "$ref": "#/paths/~1detections/get/parameters/1"
+          },
+          {
+            "$ref": "#/paths/~1detections/get/parameters/2"
+          },
+          {
+            "$ref": "#/paths/~1detections/get/parameters/3"
+          },
+          {
+            "$ref": "#/paths/~1detections/get/parameters/4"
+          },
+          {
+            "$ref": "#/paths/~1detections/get/parameters/5"
+          }
         ],
         "responses": {
           "200": {
@@ -283,7 +470,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": {"type": "integer"}
+                    "count": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
@@ -313,6 +502,33 @@
               "type": "string"
             },
             "description": "Filter classifications by model_id"
+          },
+          {
+            "name": "family",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter classifications by family"
+          },
+          {
+            "name": "genus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter classifications by genus"
+          },
+          {
+            "name": "species",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter classifications by species"
           },
           {
             "name": "start_time",
@@ -412,12 +628,24 @@
       "get": {
         "summary": "Get a count of classifications",
         "parameters": [
-          {"$ref": "#/paths/~1classifications/get/parameters/0"},
-          {"$ref": "#/paths/~1classifications/get/parameters/1"},
-          {"$ref": "#/paths/~1classifications/get/parameters/2"},
-          {"$ref": "#/paths/~1classifications/get/parameters/3"},
-          {"$ref": "#/paths/~1classifications/get/parameters/4"},
-          {"$ref": "#/paths/~1classifications/get/parameters/5"}
+          {
+            "$ref": "#/paths/~1classifications/get/parameters/0"
+          },
+          {
+            "$ref": "#/paths/~1classifications/get/parameters/1"
+          },
+          {
+            "$ref": "#/paths/~1classifications/get/parameters/2"
+          },
+          {
+            "$ref": "#/paths/~1classifications/get/parameters/3"
+          },
+          {
+            "$ref": "#/paths/~1classifications/get/parameters/4"
+          },
+          {
+            "$ref": "#/paths/~1classifications/get/parameters/5"
+          }
         ],
         "responses": {
           "200": {
@@ -427,7 +655,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": {"type": "integer"}
+                    "count": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
@@ -625,12 +855,24 @@
       "get": {
         "summary": "Get a count of videos",
         "parameters": [
-          {"$ref": "#/paths/~1videos/get/parameters/0"},
-          {"$ref": "#/paths/~1videos/get/parameters/1"},
-          {"$ref": "#/paths/~1videos/get/parameters/2"},
-          {"$ref": "#/paths/~1videos/get/parameters/3"},
-          {"$ref": "#/paths/~1videos/get/parameters/4"},
-          {"$ref": "#/paths/~1videos/get/parameters/5"}
+          {
+            "$ref": "#/paths/~1videos/get/parameters/0"
+          },
+          {
+            "$ref": "#/paths/~1videos/get/parameters/1"
+          },
+          {
+            "$ref": "#/paths/~1videos/get/parameters/2"
+          },
+          {
+            "$ref": "#/paths/~1videos/get/parameters/3"
+          },
+          {
+            "$ref": "#/paths/~1videos/get/parameters/4"
+          },
+          {
+            "$ref": "#/paths/~1videos/get/parameters/5"
+          }
         ],
         "responses": {
           "200": {
@@ -640,7 +882,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": {"type": "integer"}
+                    "count": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
@@ -786,9 +1030,15 @@
       "get": {
         "summary": "Get a count of environmental readings",
         "parameters": [
-          {"$ref": "#/paths/~1environment/get/parameters/0"},
-          {"$ref": "#/paths/~1environment/get/parameters/1"},
-          {"$ref": "#/paths/~1environment/get/parameters/2"}
+          {
+            "$ref": "#/paths/~1environment/get/parameters/0"
+          },
+          {
+            "$ref": "#/paths/~1environment/get/parameters/1"
+          },
+          {
+            "$ref": "#/paths/~1environment/get/parameters/2"
+          }
         ],
         "responses": {
           "200": {
@@ -798,7 +1048,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": {"type": "integer"}
+                    "count": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
@@ -877,6 +1129,110 @@
           }
         }
       },
+      "DeploymentData": {
+        "type": "object",
+        "required": [
+          "name",
+          "model_id",
+          "description"
+        ],
+        "properties": {
+          "deployment_id": {
+            "type": "string",
+            "description": "Unique identifier for the deployment"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the deployment"
+          },
+          "timestamp_start": {
+            "type": "string",
+            "description": "ISO-8601 formatted timestamp for start of deployment(optional, server will generate if not provided)"
+          },
+          "timestamp_end": {
+            "type": "string",
+            "description": "ISO-8601 formatted timestamp for end of deployment"
+          },
+          "model_id": {
+            "type": "string",
+            "description": "Unique identifier for the model used in the deployment"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the deployment"
+          },
+          "image": {
+            "type": "string",
+            "description": "Base64 encoded image data"
+          }
+        },
+        "location": {
+          "type": "object",
+          "description": "Optional location of the deployment",
+          "properties": {
+            "lat": {
+              "type": "number",
+              "description": "Latitude coordinate"
+            },
+            "long": {
+              "type": "number",
+              "description": "Longitude coordinate"
+            },
+            "alt": {
+              "type": "number",
+              "description": "Altitude in meters (optional)"
+            }
+          }
+        }
+      },
+      "UpdateDeploymentData": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the deployment"
+          },
+          "timestamp_start": {
+            "type": "string",
+            "description": "ISO-8601 formatted timestamp for start of deployment(optional, server will generate if not provided)"
+          },
+          "timestamp_end": {
+            "type": "string",
+            "description": "ISO-8601 formatted timestamp for end of deployment"
+          },
+          "model_id": {
+            "type": "string",
+            "description": "Unique identifier for the model used in the deployment"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the deployment"
+          },
+          "image": {
+            "type": "string",
+            "description": "Base64 encoded image data"
+          }
+        },
+        "location": {
+          "type": "object",
+          "description": "Optional location of the deployment",
+          "properties": {
+            "lat": {
+              "type": "number",
+              "description": "Latitude coordinate"
+            },
+            "long": {
+              "type": "number",
+              "description": "Longitude coordinate"
+            },
+            "alt": {
+              "type": "number",
+              "description": "Altitude in meters (optional)"
+            }
+          }
+        }
+      },
       "ClassificationData": {
         "type": "object",
         "required": [
@@ -941,7 +1297,9 @@
           },
           "bounding_box": {
             "type": "array",
-            "items": {"type": "number"},
+            "items": {
+              "type": "number"
+            },
             "minItems": 4,
             "maxItems": 4,
             "description": "Optional bounding box coordinates [xmin, ymin, xmax, ymax] for the classification; must be 4 numbers with xmin < xmax and ymin < ymax."
@@ -955,34 +1313,61 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "name": {"type": "string"},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                    "name": {
+                      "type": "string"
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
                   },
-                  "required": ["name", "confidence"]
+                  "required": [
+                    "name",
+                    "confidence"
+                  ]
                 },
                 "description": "Array of family candidates with confidence scores"
               },
               "genus": {
-                "type": "array", 
+                "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
-                    "name": {"type": "string"},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                    "name": {
+                      "type": "string"
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
                   },
-                  "required": ["name", "confidence"]
+                  "required": [
+                    "name",
+                    "confidence"
+                  ]
                 },
                 "description": "Array of genus candidates with confidence scores"
               },
               "species": {
                 "type": "array",
                 "items": {
-                  "type": "object", 
+                  "type": "object",
                   "properties": {
-                    "name": {"type": "string"},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                    "name": {
+                      "type": "string"
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
                   },
-                  "required": ["name", "confidence"]
+                  "required": [
+                    "name",
+                    "confidence"
+                  ]
                 },
                 "description": "Array of species candidates with confidence scores"
               }
@@ -993,7 +1378,7 @@
             "description": "Optional location data where the classification was recorded"
           },
           "environment": {
-            "$ref": "#/components/schemas/EnvironmentalData", 
+            "$ref": "#/components/schemas/EnvironmentalData",
             "description": "Optional environmental sensor data collected at time of classification"
           }
         }

@@ -206,7 +206,9 @@ def _validate_api_request(body: Dict[str, Any], request_type: str) -> (bool, str
         'model_request': 'ModelData',
         'video_request': 'VideoData',
         'video_registration_request': 'VideoRegistrationRequest',
-        'environmental_reading_request': 'EnvironmentalReading'
+        'environmental_reading_request': 'EnvironmentalReading',
+        'deployment_request': 'DeploymentData',
+        'update_deployment_request': 'UpdateDeploymentData' 
     }
     
     # Get schema from the OpenAPI spec
@@ -870,6 +872,111 @@ def _store_environmental_reading(body: Dict[str, Any]) -> Dict[str, Any]:
     
     return dynamodb.store_environmental_data(data)
 
+def _store_deployment(body: Dict[str, Any]) -> Dict[str, Any]:
+    """Process and store deployment data"""
+    data = {
+        'deployment_id': body.get('development_id', str(uuid.uuid4())),
+        'name': body['name'],
+        'timestamp_start': body.get('timestamp_start', datetime.now(timezone.utc).isoformat()),
+        'model_id': body['model_id'],
+        'description': body['description']
+    }
+
+    if 'timestamp_end' in body:
+        data['timestamp_end'] = body['timestamp_end']
+
+    if 'image' in body:
+        timestamp_str = datetime.now(timezone.utc).strftime('%Y-%m-%d-%H-%M-%S')
+        s3_key = _upload_image_to_s3(body['image'], body['deployment_id'], 'deployment', timestamp_str)
+        data['image_key'] = s3_key
+        data['image_bucket'] = IMAGES_BUCKET
+
+    return dynamodb.store_deployment_data(data)
+
+
+def handle_get_deployments(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle GET /deployments endpoint"""
+    try:
+        query_params = event.get('queryStringParameters', {}) or {}
+        result = dynamodb.query_deployments(
+            deployment_id=query_params.get('deployment_id'),
+            model_id=query_params.get('model_id'),
+            start_time=query_params.get('start_time'),
+            end_time=query_params.get('end_time'),
+            limit=int(query_params.get('limit', 100)) if query_params.get('limit') else 100,
+            next_token=query_params.get('next_token'),
+            sort_by=query_params.get('sort_by'),
+            sort_desc=query_params.get('sort_desc', 'false').lower() == 'true'
+        )
+        if 'items' in result:
+            result['items'] = _clean_timestamps(result['items'])
+            result = _add_presigned_urls(result)
+        return {
+            'statusCode': 200,
+            'body': json.dumps(result, cls=dynamodb.DynamoDBEncoder)
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)}, cls=dynamodb.DynamoDBEncoder)
+        }
+
+
+def handle_post_deployment(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle POST /deployments endpoint"""
+    return _common_post_handler(event, 'deployment', _store_deployment)
+
+
+def handle_patch_deployment(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle PATCH /deployments/{deployment_id} endpoint"""
+    try:
+        # Extract deployment_id from path parameters
+        path_params = event.get('pathParameters') or {}
+        deployment_id = path_params.get('deployment_id')
+
+        # Fall back to parsing the path string directly
+        if not deployment_id:
+            deployment_id = event.get('requestContext', {}).get('http', {}).get('path', '').split('/')[-1]
+
+        if not deployment_id:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'deployment_id is required'}, cls=dynamodb.DynamoDBEncoder)
+            }
+
+        # Parse and validate request body
+        body = _parse_request(event)
+
+        is_valid, error_message = _validate_api_request(body, 'update_deployment_request')
+        if not is_valid:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': error_message}, cls=dynamodb.DynamoDBEncoder)
+            }
+
+        if not body:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'No fields to update'}, cls=dynamodb.DynamoDBEncoder)
+            }
+
+        # Handle image upload if present
+        if 'image' in body:
+            timestamp_str = datetime.now(timezone.utc).strftime('%Y-%m-%d-%H-%M-%S')
+            s3_key = _upload_image_to_s3(body['image'], deployment_id, 'deployment', timestamp_str)
+            del body['image']
+            body['image_key'] = s3_key
+            body['image_bucket'] = IMAGES_BUCKET
+
+        return dynamodb.update_deployment_data(deployment_id, body)
+
+    except Exception as e:
+        print(f"Error in patch deployment handler: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)}, cls=dynamodb.DynamoDBEncoder)
+        }
+
 def handle_post_environment(event: Dict[str, Any]) -> Dict[str, Any]:
     """Handle POST /environment endpoint"""
     return _common_post_handler(event, 'environmental_reading', _store_environmental_reading)
@@ -1304,7 +1411,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f"Dispatching to handler for {http_method} {path}")
         
         # API Key validation for write operations
-        if http_method in ['POST', 'PUT', 'DELETE']:
+        if http_method in ['POST', 'PUT', 'DELETE', 'PATCH']:
             is_valid, error_message = validate_api_key(event)
             if not is_valid:
                 print(f"Authentication failed for {http_method} {path}: {error_message}")
@@ -1352,6 +1459,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return handle_post_environment(event)
         elif http_method == 'GET' and path == '/environment/count':
             return handle_count_environment(event)
+        elif http_method == 'GET' and path == '/deployments':
+            return handle_get_deployments(event)
+        elif http_method == 'POST' and path == '/deployments':
+            return handle_post_deployment(event)
+        elif http_method == 'PATCH' and path.startswith('/deployments/'):
+            return handle_patch_deployment(event)
         # CSV export endpoints
         elif http_method == 'GET' and path == '/detections/csv':
             return handle_csv_detections(event)

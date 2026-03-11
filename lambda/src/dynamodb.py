@@ -24,6 +24,8 @@ MODELS_TABLE = 'sensing-garden-models'
 VIDEOS_TABLE = 'sensing-garden-videos'
 DEVICES_TABLE = 'sensing-garden-devices'
 ENVIRONMENTAL_READINGS_TABLE = 'sensing-garden-environmental-readings'
+DEPLOYMENTS_TABLE = 'sensing-garden-deployments'
+DEPLOYMENT_DEVICE_CONNECTIONS_TABLE = 'sensing-garden-deployment-device-connections'
 
 import traceback
 
@@ -364,7 +366,9 @@ def _validate_data(data: Dict[str, Any], table_type: str) -> (bool, str):
             'detection': 'sensor_detections',
             'classification': 'sensor_classifications',
             'video': 'videos',
-            'environmental_reading': 'environmental_readings'
+            'environmental_reading': 'environmental_readings',
+            'deployment': 'deployments',
+            'deployment_device_connection': 'deployment_device_connections'
         }
         
         # Use mapped schema key if available
@@ -530,7 +534,9 @@ def count_data(table_type: str, device_id: Optional[str] = None, model_id: Optio
         'classification': CLASSIFICATIONS_TABLE,
         'model': MODELS_TABLE,
         'video': VIDEOS_TABLE,
-        'environmental_reading': ENVIRONMENTAL_READINGS_TABLE
+        'environmental_reading': ENVIRONMENTAL_READINGS_TABLE,
+        'deployment': DEPLOYMENTS_TABLE,
+        'deployment_device_connection': DEPLOYMENT_DEVICE_CONNECTIONS_TABLE
     }[table_type]
     table = dynamodb.Table(table_name)
     from boto3.dynamodb.conditions import Key, Attr
@@ -605,7 +611,7 @@ def query_data(table_type: str, device_id: Optional[str] = None, model_id: Optio
                end_time: Optional[str] = None, limit: int = 100, next_token: Optional[str] = None,
                sort_by: Optional[str] = None, sort_desc: bool = False) -> Dict[str, Any]:
     """Unified query for all DynamoDB tables with filtering and pagination."""
-    if table_type not in ['detection', 'classification', 'model', 'video', 'environmental_reading']:
+    if table_type not in ['detection', 'classification', 'model', 'video', 'environmental_reading', 'deployment']:
         raise ValueError(f"Invalid table_type: {table_type}")
 
     table_name = {
@@ -613,7 +619,9 @@ def query_data(table_type: str, device_id: Optional[str] = None, model_id: Optio
         'classification': CLASSIFICATIONS_TABLE,
         'model': MODELS_TABLE,
         'video': VIDEOS_TABLE,
-        'environmental_reading': ENVIRONMENTAL_READINGS_TABLE
+        'environmental_reading': ENVIRONMENTAL_READINGS_TABLE,
+        'deployment': DEPLOYMENTS_TABLE,
+        'deployment_device_connection': DEPLOYMENT_DEVICE_CONNECTIONS_TABLE
     }[table_type]
     table = dynamodb.Table(table_name)
 
@@ -623,7 +631,9 @@ def query_data(table_type: str, device_id: Optional[str] = None, model_id: Optio
         'classification': 'device_id',
         'video': 'device_id',
         'environmental_reading': 'device_id',
-        'model': 'id'
+        'model': 'id',
+        'deployment': 'deployment_id',
+        'deployment_device_connection': 'deployment_id'
     }[table_type]
     # model_id field for filtering (optional)
     model_id_field = 'model_id' if table_type in ['detection', 'classification', 'video'] else 'id'
@@ -721,37 +731,59 @@ def query_data(table_type: str, device_id: Optional[str] = None, model_id: Optio
         result['next_token'] = json.dumps(response['LastEvaluatedKey'])
     return result
 
-def store_detection_data(data):
-    """Store sensor detection data in DynamoDB"""
-    return _store_data(data, DETECTIONS_TABLE, 'detection')
+def store_deployment_data(data):
+    """Store deployment data in DynamoDB"""
+    return _store_data(data, DEPLOYMENTS_TABLE, 'deployments')
 
-def store_classification_data(data):
-    """Store sensor classification data in DynamoDB"""
-    return _store_data(data, CLASSIFICATIONS_TABLE, 'classification')
+def update_deployment_data(deployment_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+    """Update an existing deployment in DynamoDB"""
+    table = dynamodb.Table(DEPLOYMENTS_TABLE)
+    
+    # Build UpdateExpression dynamically from provided fields
+    update_parts = []
+    expr_attr_values = {}
+    expr_attr_names = {}
+    
+    for key, value in updates.items():
+        safe_key = f"#field_{key}"
+        val_key = f":val_{key}"
+        update_parts.append(f"{safe_key} = {val_key}")
+        expr_attr_names[safe_key] = key
+        expr_attr_values[val_key] = value
+    
+    if not update_parts:
+        return {'statusCode': 400, 'body': json.dumps({'error': 'No fields to update'})}
+    
+    try:
+        response = table.update_item(
+            Key={'deployment_id': deployment_id},
+            UpdateExpression='SET ' + ', '.join(update_parts),
+            ExpressionAttributeNames=expr_attr_names,
+            ExpressionAttributeValues=expr_attr_values,
+            ConditionExpression='attribute_exists(deployment_id)',  # 404 if not found
+            ReturnValues='ALL_NEW'
+        )
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Deployment updated successfully',
+                'data': response.get('Attributes', {})
+            }, cls=DynamoDBEncoder)
+        }
+    except dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
+        return {'statusCode': 404, 'body': json.dumps({'error': f'Deployment {deployment_id} not found'})}
+    except Exception as e:
+        return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
 
-def store_model_data(data):
-    """Store model data in DynamoDB"""
-    # Models must have an id field which is the primary key
-    if 'id' not in data:
-        raise ValueError("Model data must contain an 'id' field")
-        
-    # Set the type field which is required by the schema
-    if 'type' not in data:
-        data['type'] = 'model'  # Default type
-        
-    return _store_data(data, MODELS_TABLE, 'model')
+def query_deployments(deployment_id=None, model_id=None, start_time=None, end_time=None,
+                      limit=100, next_token=None, sort_by=None, sort_desc=False):
+    """Query deployments table"""
+    return query_data('deployment', deployment_id, model_id, start_time, end_time,
+                      limit, next_token, sort_by, sort_desc)
 
-def store_video_data(data):
-    """Store video data in DynamoDB"""
-    # Set the type field which is required by the schema
-    if 'type' not in data:
-        data['type'] = 'video'  # Default type
-        
-    return _store_data(data, VIDEOS_TABLE, 'video')
-
-def store_environmental_data(data):
-    """Store environmental reading data in DynamoDB"""
-    return _store_data(data, ENVIRONMENTAL_READINGS_TABLE, 'environmental_reading')
+def store_deployment_device_connection_data(data):
+    """Store connection between deployment and device in dynamoDB"""
+    return _store_data(data, DEPLOYMENT_DEVICE_CONNECTIONS_TABLE, 'deployment')
 
 def query_environmental_data(device_id: Optional[str] = None, start_time: Optional[str] = None,
                            end_time: Optional[str] = None, limit: int = 100, next_token: Optional[str] = None,

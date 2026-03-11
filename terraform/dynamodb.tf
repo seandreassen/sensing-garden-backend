@@ -198,27 +198,27 @@ resource "aws_dynamodb_table" "deployments" {
   name         = "sensing-garden-deployments"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "deployment_id"
-  range_key    = "start_time"
 
   attribute {
     name = "deployment_id"
     type = "S"
   }
-
   attribute {
     name = "start_time"
     type = "S"
   }
 
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = all
+  global_secondary_index {
+    name            = "deployment-time-index"
+    hash_key        = "deployment_id"
+    range_key       = "start_time"
+    projection_type = "ALL"
   }
 }
 
 # Create deployment_device_connection table
 resource "aws_dynamodb_table" "deployment_device_connections" {
-  name         = "sensing-garden-deployments"
+  name         = "sensing-garden-deployment-connections"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "deployment_id"
   range_key    = "device_id"
@@ -231,11 +231,6 @@ resource "aws_dynamodb_table" "deployment_device_connections" {
   attribute {
     name = "device_id"
     type = "S"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = all
   }
 }
 

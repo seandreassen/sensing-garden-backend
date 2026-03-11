@@ -4,7 +4,7 @@ resource "aws_apigatewayv2_api" "http_api" {
   
   cors_configuration {
     allow_headers = ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"]
-    allow_methods = ["POST", "GET", "OPTIONS", "DELETE"]
+    allow_methods = ["POST", "GET", "OPTIONS", "DELETE", "PATCH"]
     allow_origins = ["*"]  # In production, restrict this to specific domains
     max_age       = 300
   }
@@ -133,6 +133,13 @@ resource "aws_apigatewayv2_route" "get_environment" {
   authorization_type = "NONE"
 }
 
+resource "aws_apigatewayv2_route" "get_deployments" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /deployments"
+  target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
+  authorization_type = "NONE"
+}
+
 resource "aws_apigatewayv2_route" "get_export" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "GET /export"
@@ -168,6 +175,14 @@ resource "aws_apigatewayv2_route" "post_classifications" {
 resource "aws_apigatewayv2_route" "post_environment" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "POST /environment"
+  target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
+  authorization_type = "NONE"
+}
+
+# POST for deployments
+resource "aws_apigatewayv2_route" "post_deployments" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /deployments"
   target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
   authorization_type = "NONE"
 }
@@ -250,6 +265,14 @@ resource "aws_apigatewayv2_route" "post_videos" {
 resource "aws_apigatewayv2_route" "post_videos_register" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "POST /videos/register"
+  target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
+  authorization_type = "NONE"
+}
+
+# PATCH for editing deployments
+resource "aws_apigatewayv2_route" "patch_deployment" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "PATCH /deployments/{deployment_id}"
   target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
   authorization_type = "NONE"
 }

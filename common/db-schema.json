@@ -317,11 +317,9 @@
       "type": "object",
       "required": [
         "deployment_id",
-        "deployment_name",
+        "name",
         "timestamp_start",
         "model_id",
-        "location_name",
-        "image_bucket",
         "description"
       ],
       "properties": {
@@ -341,13 +339,23 @@
           "type": "string",
           "description": "Unique identifier for the model used in the deployment"
         },
-        "location_name": {
-          "type": "string",
-          "description": "Name of location of deployment"
-        },
-        "location_coordinates": {
-          "type": "string",
-          "description": "ISO-6709 formatted coordinates for the deployment"
+        "location": {
+          "type": "object",
+          "description": "Optional location of the deployment",
+          "properties": {
+            "lat": {
+              "type": "number",
+              "description": "Latitude coordinate"
+            },
+            "long": {
+              "type": "number",
+              "description": "Longitude coordinate"
+            },
+            "alt": {
+              "type": "number",
+              "description": "Altitude in meters (optional)"
+            }
+          }
         },
         "image_bucket": {
           "type": "string",
@@ -379,13 +387,23 @@
           "type": "string",
           "description": "Unique identifier for the device"
         },
-        "location_name": {
-          "type": "string",
-          "description": "Version identifier for the model"
-        },
-        "location_coordinates": {
-          "type": "string",
-          "description": "ISO-6709 formatted coordinates for the deployment"
+        "location": {
+          "type": "object",
+          "description": "Optional location of device during a deployment",
+          "properties": {
+            "lat": {
+              "type": "number",
+              "description": "Latitude coordinate"
+            },
+            "long": {
+              "type": "number",
+              "description": "Longitude coordinate"
+            },
+            "alt": {
+              "type": "number",
+              "description": "Altitude in meters (optional)"
+            }
+          }
         }
       }
     }
