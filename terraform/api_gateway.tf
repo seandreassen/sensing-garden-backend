@@ -252,7 +252,6 @@ resource "aws_apigatewayv2_route" "get_environment_count" {
   authorization_type = "NONE"
 }
 
-
 # POST for videos
 resource "aws_apigatewayv2_route" "post_videos" {
   api_id    = aws_apigatewayv2_api.http_api.id
@@ -273,6 +272,22 @@ resource "aws_apigatewayv2_route" "post_videos_register" {
 resource "aws_apigatewayv2_route" "patch_deployment" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "PATCH /deployments/{deployment_id}"
+  target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
+  authorization_type = "NONE"
+}
+
+# GET for getting a single deployment with devices
+resource "aws_apigatewayv2_route" "get_deployment" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /deployments/{deployment_id}"
+  target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
+  authorization_type = "NONE"
+}
+
+# POST for connecting a device to a deployment
+resource "aws_apigatewayv2_route" "post_deployment_device_connection" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /deployment_device_connections"
   target    = "integrations/${aws_apigatewayv2_integration.api_lambda.id}"
   authorization_type = "NONE"
 }

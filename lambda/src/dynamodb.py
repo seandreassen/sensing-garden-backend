@@ -611,7 +611,7 @@ def query_data(table_type: str, device_id: Optional[str] = None, model_id: Optio
                end_time: Optional[str] = None, limit: int = 100, next_token: Optional[str] = None,
                sort_by: Optional[str] = None, sort_desc: bool = False) -> Dict[str, Any]:
     """Unified query for all DynamoDB tables with filtering and pagination."""
-    if table_type not in ['detection', 'classification', 'model', 'video', 'environmental_reading', 'deployment']:
+    if table_type not in ['detection', 'classification', 'model', 'video', 'environmental_reading', 'deployment', 'deployment_device_connection']:
         raise ValueError(f"Invalid table_type: {table_type}")
 
     table_name = {
@@ -781,9 +781,13 @@ def query_deployments(deployment_id=None, model_id=None, start_time=None, end_ti
     return query_data('deployment', deployment_id, model_id, start_time, end_time,
                       limit, next_token, sort_by, sort_desc)
 
+def query_deployment_device_connections(deployment_id:Optional[str]=None, device_id:Optional[str]=None) -> Dict[str, Any]:
+    """Query deployment_device_connections table"""
+    return query_data('deployment_device_connection', deployment_id, device_id)
+
 def store_deployment_device_connection_data(data):
     """Store connection between deployment and device in dynamoDB"""
-    return _store_data(data, DEPLOYMENT_DEVICE_CONNECTIONS_TABLE, 'deployment')
+    return _store_data(data, DEPLOYMENT_DEVICE_CONNECTIONS_TABLE, 'deployment_device_connection')
 
 def query_environmental_data(device_id: Optional[str] = None, start_time: Optional[str] = None,
                            end_time: Optional[str] = None, limit: int = 100, next_token: Optional[str] = None,

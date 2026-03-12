@@ -208,7 +208,8 @@ def _validate_api_request(body: Dict[str, Any], request_type: str) -> (bool, str
         'video_registration_request': 'VideoRegistrationRequest',
         'environmental_reading_request': 'EnvironmentalReading',
         'deployment_request': 'DeploymentData',
-        'update_deployment_request': 'UpdateDeploymentData' 
+        'update_deployment_request': 'UpdateDeploymentData',
+        'deployment_device_connection_request': 'DeploymentDeviceConnectionData'
     }
     
     # Get schema from the OpenAPI spec
@@ -875,7 +876,7 @@ def _store_environmental_reading(body: Dict[str, Any]) -> Dict[str, Any]:
 def _store_deployment(body: Dict[str, Any]) -> Dict[str, Any]:
     """Process and store deployment data"""
     data = {
-        'deployment_id': body.get('development_id', str(uuid.uuid4())),
+        'deployment_id': body.get('deployment_id', str(uuid.uuid4())),
         'name': body['name'],
         'timestamp_start': body.get('timestamp_start', datetime.now(timezone.utc).isoformat()),
         'model_id': body['model_id'],
@@ -887,7 +888,7 @@ def _store_deployment(body: Dict[str, Any]) -> Dict[str, Any]:
 
     if 'image' in body:
         timestamp_str = datetime.now(timezone.utc).strftime('%Y-%m-%d-%H-%M-%S')
-        s3_key = _upload_image_to_s3(body['image'], body['deployment_id'], 'deployment', timestamp_str)
+        s3_key = _upload_image_to_s3(body['image'], data['deployment_id'], 'deployment', timestamp_str)
         data['image_key'] = s3_key
         data['image_bucket'] = IMAGES_BUCKET
 
@@ -898,6 +899,7 @@ def handle_get_deployments(event: Dict[str, Any]) -> Dict[str, Any]:
     """Handle GET /deployments endpoint"""
     try:
         query_params = event.get('queryStringParameters', {}) or {}
+
         result = dynamodb.query_deployments(
             deployment_id=query_params.get('deployment_id'),
             model_id=query_params.get('model_id'),
@@ -920,6 +922,34 @@ def handle_get_deployments(event: Dict[str, Any]) -> Dict[str, Any]:
             'statusCode': 500,
             'body': json.dumps({'error': str(e)}, cls=dynamodb.DynamoDBEncoder)
         }
+    
+def handle_get_deployment(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle GET /deployments/{deployment_id}"""
+    try:
+        path_params = event.get('pathParameters') or {}
+        deployment_result = dynamodb.query_deployments(
+            deployment_id=path_params.get('deployment_id')
+        )
+        try:
+            devices_result = dynamodb.query_deployment_device_connections(
+                deployment_id=path_params.get('deployment_id')
+            )
+        except Exception as e:
+            devices_result = {}
+        result = {
+            'deployment': deployment_result,
+            'devices': devices_result
+        }
+        return {
+            'statusCode': 200,
+            'body': json.dumps(result, cls=dynamodb.DynamoDBEncoder)
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)}, cls=dynamodb.DynamoDBEncoder)
+        }
+
 
 
 def handle_post_deployment(event: Dict[str, Any]) -> Dict[str, Any]:
@@ -976,6 +1006,27 @@ def handle_patch_deployment(event: Dict[str, Any]) -> Dict[str, Any]:
             'statusCode': 500,
             'body': json.dumps({'error': str(e)}, cls=dynamodb.DynamoDBEncoder)
         }
+    
+def handle_post_deployment_device_connection(event: Dict[str, Any]) -> Dict[str,Any]:
+    """Handle POST /deployment_device_connection"""
+    return _common_post_handler(event, 'deployment_device_connection', _store_deployment_device_connection)
+
+def _store_deployment_device_connection(body: Dict[str,Any]) -> Dict[str,Any]:
+    """Process and store deployment device connection data"""
+    data = {
+        'deployment_id': body['deployment_id'],
+        'device_id': body['device_id']
+    }
+    if 'location' in body:
+        location = body['location']
+        data['location'] = {
+            'lat': Decimal(str(location['lat'])),
+            'long': Decimal(str(location['long']))
+        }
+        if 'alt' in location:
+            data['location']['alt'] = Decimal(str(location['alt']))
+
+    return dynamodb.store_deployment_device_connection_data(data)
 
 def handle_post_environment(event: Dict[str, Any]) -> Dict[str, Any]:
     """Handle POST /environment endpoint"""
@@ -1421,6 +1472,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
         
         # Routing logic
+        print(f"http_method={http_method}, path={path}")
+
         if http_method == 'GET' and path == '/devices':
             return handle_get_devices(event)
         elif http_method == 'POST' and path == '/devices':
@@ -1461,10 +1514,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return handle_count_environment(event)
         elif http_method == 'GET' and path == '/deployments':
             return handle_get_deployments(event)
+        elif http_method == 'GET' and path.startswith('/deployments/'):
+            return handle_get_deployment(event)
         elif http_method == 'POST' and path == '/deployments':
             return handle_post_deployment(event)
         elif http_method == 'PATCH' and path.startswith('/deployments/'):
             return handle_patch_deployment(event)
+        elif http_method == 'POST'and path == '/deployment_device_connections':
+            return handle_post_deployment_device_connection(event)
         # CSV export endpoints
         elif http_method == 'GET' and path == '/detections/csv':
             return handle_csv_detections(event)

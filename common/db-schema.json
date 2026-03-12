@@ -375,8 +375,7 @@
       "type": "object",
       "required": [
         "deployment_id",
-        "device_id",
-        "image_bucket"
+        "device_id"
       ],
       "properties": {
         "deployment_id": {

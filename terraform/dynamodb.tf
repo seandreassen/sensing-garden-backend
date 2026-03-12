@@ -78,6 +78,16 @@ resource "aws_dynamodb_table" "sensor_classifications" {
     type = "S"
   }
 
+  attribute {
+    name = "genus"
+    type = "S"
+  }
+
+  attribute {
+    name = "family"
+    type = "S"
+  }
+
   global_secondary_index {
     name               = "model_id_index"
     hash_key           = "model_id"
@@ -87,13 +97,19 @@ resource "aws_dynamodb_table" "sensor_classifications" {
   global_secondary_index {
     name               = "species_index"
     hash_key           = "species"
-    range_key          = null
     projection_type    = "ALL"
   }
 
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = all
+  global_secondary_index {
+    name               = "genus_index"
+    hash_key           = "genus"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "family_index"
+    hash_key           = "family"
+    projection_type    = "ALL"
   }
 }
 
@@ -218,7 +234,7 @@ resource "aws_dynamodb_table" "deployments" {
 
 # Create deployment_device_connection table
 resource "aws_dynamodb_table" "deployment_device_connections" {
-  name         = "sensing-garden-deployment-connections"
+  name         = "sensing-garden-deployment-device-connections"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "deployment_id"
   range_key    = "device_id"

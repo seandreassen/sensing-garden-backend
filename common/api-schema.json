@@ -284,6 +284,31 @@
       }
     },
     "/deployments/{deployment_id}": {
+      "get": {
+        "summary": "Get information about a deployment",
+        "parameters": [
+          {
+            "name": "deployment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the deployment to fetch data from"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deployment retrieved succesfully"
+          },
+          "404": {
+            "description": "Deployment not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
       "patch": {
         "summary": "Update an existing deployment",
         "parameters": [
@@ -319,6 +344,21 @@
           },
           "500": {
             "description": "Server error"
+          }
+        }
+      }
+    },
+    "/deployment_device_connections": {
+      "post": {
+        "summary": "Connect a device to a deployment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentDeviceConnectionData"
+              }
+            }
           }
         }
       }
@@ -1164,23 +1204,23 @@
           "image": {
             "type": "string",
             "description": "Base64 encoded image data"
-          }
-        },
-        "location": {
-          "type": "object",
-          "description": "Optional location of the deployment",
-          "properties": {
-            "lat": {
-              "type": "number",
-              "description": "Latitude coordinate"
-            },
-            "long": {
-              "type": "number",
-              "description": "Longitude coordinate"
-            },
-            "alt": {
-              "type": "number",
-              "description": "Altitude in meters (optional)"
+          },
+          "location": {
+            "type": "object",
+            "description": "Optional location of the deployment",
+            "properties": {
+              "lat": {
+                "type": "number",
+                "description": "Latitude coordinate"
+              },
+              "long": {
+                "type": "number",
+                "description": "Longitude coordinate"
+              },
+              "alt": {
+                "type": "number",
+                "description": "Altitude in meters (optional)"
+              }
             }
           }
         }
@@ -1212,24 +1252,45 @@
           "image": {
             "type": "string",
             "description": "Base64 encoded image data"
-          }
-        },
-        "location": {
-          "type": "object",
-          "description": "Optional location of the deployment",
-          "properties": {
-            "lat": {
-              "type": "number",
-              "description": "Latitude coordinate"
-            },
-            "long": {
-              "type": "number",
-              "description": "Longitude coordinate"
-            },
-            "alt": {
-              "type": "number",
-              "description": "Altitude in meters (optional)"
+          },
+          "location": {
+            "type": "object",
+            "description": "Optional location of the deployment",
+            "properties": {
+              "lat": {
+                "type": "number",
+                "description": "Latitude coordinate"
+              },
+              "long": {
+                "type": "number",
+                "description": "Longitude coordinate"
+              },
+              "alt": {
+                "type": "number",
+                "description": "Altitude in meters (optional)"
+              }
             }
+          }
+        }
+      },
+      "DeploymentDeviceConnectionData": {
+        "type": "object",
+        "required": [
+          "deployment_id",
+          "device_id"
+        ],
+        "properties": {
+          "deployment_id": {
+            "type": "string",
+            "description": "Deployment_id of the deployment you are connecting a device to"
+          },
+          "device_id": {
+            "type": "string",
+            "description": "Device_id of the device being connected to the deployment"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location",
+            "description": "Optional location of device during deployment."
           }
         }
       },
