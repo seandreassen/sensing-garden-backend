@@ -44,7 +44,9 @@ resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
           aws_dynamodb_table.models.arn,
           aws_dynamodb_table.devices.arn,
           aws_dynamodb_table.videos.arn,
-          aws_dynamodb_table.environmental_readings.arn
+          aws_dynamodb_table.environmental_readings.arn,
+          aws_dynamodb_table.deployments.arn,
+          aws_dynamodb_table.deployment_device_connections.arn
         ]
       }
     ]
@@ -76,4 +78,10 @@ resource "aws_iam_role_policy" "lambda_s3_policy" {
       }
     ]
   })
+}
+
+# IAM policy for Lamda to access cloud watch
+resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }

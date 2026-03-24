@@ -1,9 +1,9 @@
 # Create S3 bucket for images
 resource "aws_s3_bucket" "sensor_images" {
-  bucket = "scl-sensing-garden-images"
+  bucket = "scl-sensing-garden-images-${data.aws_caller_identity.current.account_id}"
 
   lifecycle {
-    prevent_destroy = true
+    #prevent_destroy = true
   }
 }
 
@@ -31,10 +31,10 @@ resource "aws_s3_bucket_cors_configuration" "sensor_images" {
 
 # Create S3 bucket for videos
 resource "aws_s3_bucket" "sensor_videos" {
-  bucket = "scl-sensing-garden-videos"
+  bucket = "scl-sensing-garden-videos-${data.aws_caller_identity.current.account_id}"
 
   lifecycle {
-    prevent_destroy = true
+    #prevent_destroy = true
   }
 }
 
@@ -66,10 +66,10 @@ resource "aws_s3_bucket_cors_configuration" "sensor_videos" {
 
 # Create S3 bucket for ML models (public read)
 resource "aws_s3_bucket" "models" {
-  bucket = "scl-sensing-garden-models"
+  bucket = "scl-sensing-garden-models-${data.aws_caller_identity.current.account_id}"
 
   lifecycle {
-    prevent_destroy = true
+    #prevent_destroy = true
   }
 }
 

@@ -73,3 +73,35 @@ def classification_with_environment(basic_classification_data, environmental_dat
     data["track_id"] = "test_track_001"
     data["bounding_box"] = [150, 200, 50, 40]
     return data
+
+@pytest.fixture
+def deployment_id():
+    """Test deployment ID fixture."""
+    return "test-deployment-001"
+
+@pytest.fixture
+def basic_deployment_data(deployment_id, model_id):
+    """Basic deployment data without optional fields."""
+    return {
+        "deployment_id": deployment_id,
+        "name": "Test Deployment",
+        "timestamp_start": "2024-01-01T00:00:00Z",
+        "model_id": model_id,
+        "description": "A test deployment"
+    }
+
+@pytest.fixture
+def full_deployment_data(basic_deployment_data, sample_base64_image):
+    """Deployment data with all optional fields."""
+    data = basic_deployment_data.copy()
+    data["timestamp_end"] = "2024-06-01T00:00:00Z"
+    data["image"] = sample_base64_image
+    return data
+
+@pytest.fixture
+def update_deployment_data():
+    """Partial update data for PATCH requests."""
+    return {
+        "name": "Updated Deployment Name",
+        "description": "Updated description"
+    }
